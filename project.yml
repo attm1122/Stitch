@@ -1,0 +1,93 @@
+name: Stitch
+options:
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "18.0"
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 1.0.0
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    GENERATE_INFOPLIST_FILE: NO
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
+targets:
+  Stitch:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: App
+      - path: Models
+      - path: Features
+      - path: Services
+      - path: Utilities
+    resources:
+      - path: Resources
+        excludes:
+          - BackendConfig.plist.example
+    info:
+      path: App/Stitch-Info.plist
+    entitlements:
+      path: App/Stitch.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.attm1122.Stitch
+        PRODUCT_NAME: Stitch
+        INFOPLIST_FILE: App/Stitch-Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/Stitch.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+  StitchShareExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: ShareExtension
+    info:
+      path: ShareExtension/Info.plist
+    entitlements:
+      path: ShareExtension/StitchShareExtension.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.attm1122.Stitch.ShareExtension
+        PRODUCT_NAME: StitchShareExtension
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/StitchShareExtension.entitlements
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        APPLICATION_EXTENSION_API_ONLY: YES
+        LD_RUNPATH_SEARCH_PATHS:
+          - $(inherited)
+          - "@executable_path/Frameworks"
+          - "@executable_path/../../Frameworks"
+    dependencies:
+      - target: Stitch
+  StitchTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Tests/StitchTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.attm1122.StitchTests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: Stitch
+schemes:
+  Stitch:
+    build:
+      targets:
+        Stitch: all
+        StitchShareExtension: all
+        StitchTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - StitchTests
+

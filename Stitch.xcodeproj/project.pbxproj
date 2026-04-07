@@ -1,0 +1,696 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		099282FB87CC9F14564351A4 /* ReceiptRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A9EBF8ACBFB50366849E16 /* ReceiptRowView.swift */; };
+		0A6BC857B4C7CEDC17AE20FB /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2C8D5870729060687DA35C0 /* ShareViewController.swift */; };
+		0ADED3CF536404EDD1071AE6 /* ReceiptExtractionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EB4686E4E942D7C0B3AA3D /* ReceiptExtractionService.swift */; };
+		0EFD7FA77F43ED42FBBB3FE9 /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = F63E1B7933416D38EC49D1CE /* Formatters.swift */; };
+		14E2A2C937F6C1DA39878784 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7626D75521869EFB02A60F88 /* AuthService.swift */; };
+		1C7F12A9779753A35EB749E4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E8938443C650B457DA493C0 /* SettingsView.swift */; };
+		2FC195FEBA205603F95A662D /* UTType+Mime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D96028DAA6B2174A0CF9C4B /* UTType+Mime.swift */; };
+		389EF9C99C6A6735E82D2E9D /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E6EF0391FBB61E66A60E494 /* AuthView.swift */; };
+		6562BA27A02523CC777E4B60 /* UploadBatchRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ABAF4E95298483EBD2B66A7 /* UploadBatchRecord.swift */; };
+		6AB8E7EBDD5C18615C785A99 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD50FAA3756AA30D084F095B /* RootView.swift */; };
+		7EC85E4EAA167D23BA1A6FBE /* StitchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12C47FBE07C2DA3B86C66A2F /* StitchApp.swift */; };
+		821131B612527302C91BF058 /* UploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F046FCEFB47C5A9DD924D2E5 /* UploadService.swift */; };
+		8741337D67D82AE36233F893 /* AuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3C95C157C25A9BF5D81DF6 /* AuthSession.swift */; };
+		8AB0A2328E48873A146424E5 /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE5AD273C1DF462552C9B619 /* AppServices.swift */; };
+		8E2A743C2198C3F605712DE8 /* ReceiptRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25B0E82AF7DB66C2C42FF20 /* ReceiptRecord.swift */; };
+		90CF5B8A1FE5CB089424C708 /* BackendConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B28F31F21EE523E1E654431 /* BackendConfiguration.swift */; };
+		A00F5F5AB3770CB0DD747DF7 /* ReceiptHeuristicsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D81E0CF1A4913316B100C1B7 /* ReceiptHeuristicsTests.swift */; };
+		A2F04CC68F37AC23FFCFCB88 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E68D127DD2D62ABAFC1FA2EC /* SessionStore.swift */; };
+		B184DE117FE1FF8D89F19DC4 /* AppGroupInboxService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5EC54742EF6BED22DDCFFE /* AppGroupInboxService.swift */; };
+		BC1543AF086774A49372933B /* InboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DF829F9EC3DB52C9734FCB4 /* InboxView.swift */; };
+		C33FFC8AEF558C7BD816E26B /* UploadQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20883C9656CB75D3C47AFA29 /* UploadQueueView.swift */; };
+		C4ADF9DC14E2264A8DD9D9B9 /* ReceiptImportCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9687CE1A899CDDAB851CB8B /* ReceiptImportCoordinator.swift */; };
+		C69B81653A9AC05E2748C37B /* ReceiptDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A3B0F3D1F4A19F9F555F7D /* ReceiptDetailView.swift */; };
+		CE5B1FB634C2A6E3885CA1E7 /* FileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8D230BAB9E460DFAAE1EE48 /* FileStore.swift */; };
+		E6EDA56799317DECB311AB0D /* DocumentScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9678ECE20B1D576D0A98F633 /* DocumentScannerView.swift */; };
+		F38F309FB5F80918DBE6EE2F /* ReceiptHeuristicParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B6C9E44F7AE7A6355BBD3AA /* ReceiptHeuristicParser.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2034E09A3D0C324B2692B1A0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 690B5BDE9B3FCA58A8252D04 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FE8370315EFE5A5CB09C8BAF;
+			remoteInfo = Stitch;
+		};
+		33214BFFAD7D2F1982DDF9CF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 690B5BDE9B3FCA58A8252D04 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FE8370315EFE5A5CB09C8BAF;
+			remoteInfo = Stitch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0D5EC54742EF6BED22DDCFFE /* AppGroupInboxService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupInboxService.swift; sourceTree = "<group>"; };
+		0E6EF0391FBB61E66A60E494 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		12C47FBE07C2DA3B86C66A2F /* StitchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StitchApp.swift; sourceTree = "<group>"; };
+		1ABAF4E95298483EBD2B66A7 /* UploadBatchRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadBatchRecord.swift; sourceTree = "<group>"; };
+		20883C9656CB75D3C47AFA29 /* UploadQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadQueueView.swift; sourceTree = "<group>"; };
+		298CE7CAAD4D861B699D4A06 /* StitchShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StitchShareExtension.entitlements; sourceTree = "<group>"; };
+		4D96028DAA6B2174A0CF9C4B /* UTType+Mime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UTType+Mime.swift"; sourceTree = "<group>"; };
+		4E8938443C650B457DA493C0 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5DF829F9EC3DB52C9734FCB4 /* InboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InboxView.swift; sourceTree = "<group>"; };
+		7626D75521869EFB02A60F88 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		7B28F31F21EE523E1E654431 /* BackendConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendConfiguration.swift; sourceTree = "<group>"; };
+		7C238B4418510A88387343A9 /* StitchTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = StitchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7F391C3034A669AF591FEA42 /* Stitch-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Stitch-Info.plist"; sourceTree = "<group>"; };
+		876C447215E86602CCA59A04 /* Stitch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Stitch.entitlements; sourceTree = "<group>"; };
+		9678ECE20B1D576D0A98F633 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
+		9B6C9E44F7AE7A6355BBD3AA /* ReceiptHeuristicParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptHeuristicParser.swift; sourceTree = "<group>"; };
+		A0563F70E14C910E4DF3A26B /* Stitch.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Stitch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A25B0E82AF7DB66C2C42FF20 /* ReceiptRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptRecord.swift; sourceTree = "<group>"; };
+		A2C8D5870729060687DA35C0 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		A8D230BAB9E460DFAAE1EE48 /* FileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileStore.swift; sourceTree = "<group>"; };
+		B9687CE1A899CDDAB851CB8B /* ReceiptImportCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptImportCoordinator.swift; sourceTree = "<group>"; };
+		BA3C95C157C25A9BF5D81DF6 /* AuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSession.swift; sourceTree = "<group>"; };
+		BE5AD273C1DF462552C9B619 /* AppServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppServices.swift; sourceTree = "<group>"; };
+		C1A9EBF8ACBFB50366849E16 /* ReceiptRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptRowView.swift; sourceTree = "<group>"; };
+		D7A3B0F3D1F4A19F9F555F7D /* ReceiptDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptDetailView.swift; sourceTree = "<group>"; };
+		D81E0CF1A4913316B100C1B7 /* ReceiptHeuristicsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptHeuristicsTests.swift; sourceTree = "<group>"; };
+		D9EB4686E4E942D7C0B3AA3D /* ReceiptExtractionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptExtractionService.swift; sourceTree = "<group>"; };
+		E6657BC59D342444296BE881 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E68D127DD2D62ABAFC1FA2EC /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		E6F63642F08CE1C284E9A0C7 /* StitchShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = StitchShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F046FCEFB47C5A9DD924D2E5 /* UploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadService.swift; sourceTree = "<group>"; };
+		F63E1B7933416D38EC49D1CE /* Formatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
+		FD50FAA3756AA30D084F095B /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0482FDBEF379325CDEDFF5A7 /* ReceiptDetail */ = {
+			isa = PBXGroup;
+			children = (
+				D7A3B0F3D1F4A19F9F555F7D /* ReceiptDetailView.swift */,
+			);
+			path = ReceiptDetail;
+			sourceTree = "<group>";
+		};
+		064E287E86ECC56A133F7597 /* Inbox */ = {
+			isa = PBXGroup;
+			children = (
+				5DF829F9EC3DB52C9734FCB4 /* InboxView.swift */,
+				C1A9EBF8ACBFB50366849E16 /* ReceiptRowView.swift */,
+			);
+			path = Inbox;
+			sourceTree = "<group>";
+		};
+		08DB5B5F3A3E0AAA6C5A8C9C /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				0E6EF0391FBB61E66A60E494 /* AuthView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		1785B6FD959A33931C173B28 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				08DB5B5F3A3E0AAA6C5A8C9C /* Auth */,
+				314AC986EB821F5DC76536C3 /* Capture */,
+				064E287E86ECC56A133F7597 /* Inbox */,
+				0482FDBEF379325CDEDFF5A7 /* ReceiptDetail */,
+				188DE2A16C0D50C6B2E318D9 /* UploadQueue */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		188DE2A16C0D50C6B2E318D9 /* UploadQueue */ = {
+			isa = PBXGroup;
+			children = (
+				20883C9656CB75D3C47AFA29 /* UploadQueueView.swift */,
+			);
+			path = UploadQueue;
+			sourceTree = "<group>";
+		};
+		195A973D83D0959809D6269D /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				0D5EC54742EF6BED22DDCFFE /* AppGroupInboxService.swift */,
+				7626D75521869EFB02A60F88 /* AuthService.swift */,
+				7B28F31F21EE523E1E654431 /* BackendConfiguration.swift */,
+				A8D230BAB9E460DFAAE1EE48 /* FileStore.swift */,
+				D9EB4686E4E942D7C0B3AA3D /* ReceiptExtractionService.swift */,
+				B9687CE1A899CDDAB851CB8B /* ReceiptImportCoordinator.swift */,
+				E68D127DD2D62ABAFC1FA2EC /* SessionStore.swift */,
+				F046FCEFB47C5A9DD924D2E5 /* UploadService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		1C440034BF6B6DE155949BB2 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BE5AD273C1DF462552C9B619 /* AppServices.swift */,
+				FD50FAA3756AA30D084F095B /* RootView.swift */,
+				4E8938443C650B457DA493C0 /* SettingsView.swift */,
+				7F391C3034A669AF591FEA42 /* Stitch-Info.plist */,
+				876C447215E86602CCA59A04 /* Stitch.entitlements */,
+				12C47FBE07C2DA3B86C66A2F /* StitchApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		314AC986EB821F5DC76536C3 /* Capture */ = {
+			isa = PBXGroup;
+			children = (
+				9678ECE20B1D576D0A98F633 /* DocumentScannerView.swift */,
+			);
+			path = Capture;
+			sourceTree = "<group>";
+		};
+		5302A629CE6335324AC32F6B /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BA3C95C157C25A9BF5D81DF6 /* AuthSession.swift */,
+				A25B0E82AF7DB66C2C42FF20 /* ReceiptRecord.swift */,
+				1ABAF4E95298483EBD2B66A7 /* UploadBatchRecord.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		54EEED32D29030CA720B82EB /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				F63E1B7933416D38EC49D1CE /* Formatters.swift */,
+				9B6C9E44F7AE7A6355BBD3AA /* ReceiptHeuristicParser.swift */,
+				4D96028DAA6B2174A0CF9C4B /* UTType+Mime.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		6954DD2D9E3853654C0AE7ED /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A0563F70E14C910E4DF3A26B /* Stitch.app */,
+				E6F63642F08CE1C284E9A0C7 /* StitchShareExtension.appex */,
+				7C238B4418510A88387343A9 /* StitchTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		713AC1531588AED8A67886AE /* StitchTests */ = {
+			isa = PBXGroup;
+			children = (
+				D81E0CF1A4913316B100C1B7 /* ReceiptHeuristicsTests.swift */,
+			);
+			path = StitchTests;
+			sourceTree = "<group>";
+		};
+		7B90FAA5ECAE266EA9C0FC70 = {
+			isa = PBXGroup;
+			children = (
+				1C440034BF6B6DE155949BB2 /* App */,
+				1785B6FD959A33931C173B28 /* Features */,
+				5302A629CE6335324AC32F6B /* Models */,
+				195A973D83D0959809D6269D /* Services */,
+				D430CF1996AC0F3A489368A0 /* ShareExtension */,
+				DD495E8B1667CF23DAAA47F8 /* Tests */,
+				54EEED32D29030CA720B82EB /* Utilities */,
+				6954DD2D9E3853654C0AE7ED /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D430CF1996AC0F3A489368A0 /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				E6657BC59D342444296BE881 /* Info.plist */,
+				A2C8D5870729060687DA35C0 /* ShareViewController.swift */,
+				298CE7CAAD4D861B699D4A06 /* StitchShareExtension.entitlements */,
+			);
+			path = ShareExtension;
+			sourceTree = "<group>";
+		};
+		DD495E8B1667CF23DAAA47F8 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				713AC1531588AED8A67886AE /* StitchTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9071EB223CA7694BF1AA77F6 /* StitchShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 55ED6A99E11A4CA75E3094DE /* Build configuration list for PBXNativeTarget "StitchShareExtension" */;
+			buildPhases = (
+				122EAD58F78446239495FDA7 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4441429149D96545B8A31C08 /* PBXTargetDependency */,
+			);
+			name = StitchShareExtension;
+			packageProductDependencies = (
+			);
+			productName = StitchShareExtension;
+			productReference = E6F63642F08CE1C284E9A0C7 /* StitchShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BD0BD82DEC97CC2522F9D356 /* StitchTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D3F2EA8C918D78B363CF26A /* Build configuration list for PBXNativeTarget "StitchTests" */;
+			buildPhases = (
+				E8FCA18F4D2D819BD3B5F16E /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AD029029D6B15ECEAE5EF9E2 /* PBXTargetDependency */,
+			);
+			name = StitchTests;
+			packageProductDependencies = (
+			);
+			productName = StitchTests;
+			productReference = 7C238B4418510A88387343A9 /* StitchTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FE8370315EFE5A5CB09C8BAF /* Stitch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 45FA49F1DDF125BC29EB6A3E /* Build configuration list for PBXNativeTarget "Stitch" */;
+			buildPhases = (
+				02269FA457668C6A325725BC /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Stitch;
+			packageProductDependencies = (
+			);
+			productName = Stitch;
+			productReference = A0563F70E14C910E4DF3A26B /* Stitch.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		690B5BDE9B3FCA58A8252D04 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					9071EB223CA7694BF1AA77F6 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					BD0BD82DEC97CC2522F9D356 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					FE8370315EFE5A5CB09C8BAF = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 93FC6EB1D77239407095787B /* Build configuration list for PBXProject "Stitch" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7B90FAA5ECAE266EA9C0FC70;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6954DD2D9E3853654C0AE7ED /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FE8370315EFE5A5CB09C8BAF /* Stitch */,
+				9071EB223CA7694BF1AA77F6 /* StitchShareExtension */,
+				BD0BD82DEC97CC2522F9D356 /* StitchTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		02269FA457668C6A325725BC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B184DE117FE1FF8D89F19DC4 /* AppGroupInboxService.swift in Sources */,
+				8AB0A2328E48873A146424E5 /* AppServices.swift in Sources */,
+				14E2A2C937F6C1DA39878784 /* AuthService.swift in Sources */,
+				8741337D67D82AE36233F893 /* AuthSession.swift in Sources */,
+				389EF9C99C6A6735E82D2E9D /* AuthView.swift in Sources */,
+				90CF5B8A1FE5CB089424C708 /* BackendConfiguration.swift in Sources */,
+				E6EDA56799317DECB311AB0D /* DocumentScannerView.swift in Sources */,
+				CE5B1FB634C2A6E3885CA1E7 /* FileStore.swift in Sources */,
+				0EFD7FA77F43ED42FBBB3FE9 /* Formatters.swift in Sources */,
+				BC1543AF086774A49372933B /* InboxView.swift in Sources */,
+				C69B81653A9AC05E2748C37B /* ReceiptDetailView.swift in Sources */,
+				0ADED3CF536404EDD1071AE6 /* ReceiptExtractionService.swift in Sources */,
+				F38F309FB5F80918DBE6EE2F /* ReceiptHeuristicParser.swift in Sources */,
+				C4ADF9DC14E2264A8DD9D9B9 /* ReceiptImportCoordinator.swift in Sources */,
+				8E2A743C2198C3F605712DE8 /* ReceiptRecord.swift in Sources */,
+				099282FB87CC9F14564351A4 /* ReceiptRowView.swift in Sources */,
+				6AB8E7EBDD5C18615C785A99 /* RootView.swift in Sources */,
+				A2F04CC68F37AC23FFCFCB88 /* SessionStore.swift in Sources */,
+				1C7F12A9779753A35EB749E4 /* SettingsView.swift in Sources */,
+				7EC85E4EAA167D23BA1A6FBE /* StitchApp.swift in Sources */,
+				2FC195FEBA205603F95A662D /* UTType+Mime.swift in Sources */,
+				6562BA27A02523CC777E4B60 /* UploadBatchRecord.swift in Sources */,
+				C33FFC8AEF558C7BD816E26B /* UploadQueueView.swift in Sources */,
+				821131B612527302C91BF058 /* UploadService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		122EAD58F78446239495FDA7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A6BC857B4C7CEDC17AE20FB /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8FCA18F4D2D819BD3B5F16E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00F5F5AB3770CB0DD747DF7 /* ReceiptHeuristicsTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4441429149D96545B8A31C08 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FE8370315EFE5A5CB09C8BAF /* Stitch */;
+			targetProxy = 2034E09A3D0C324B2692B1A0 /* PBXContainerItemProxy */;
+		};
+		AD029029D6B15ECEAE5EF9E2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FE8370315EFE5A5CB09C8BAF /* Stitch */;
+			targetProxy = 33214BFFAD7D2F1982DDF9CF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		88C6A46E5E89809FB6269B8D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/Stitch.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "App/Stitch-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.attm1122.Stitch;
+				PRODUCT_NAME = Stitch;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		92DA8D94A3CC71EA3667E455 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		B32C07194FAB953337367830 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/StitchShareExtension.entitlements;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.attm1122.Stitch.ShareExtension;
+				PRODUCT_NAME = StitchShareExtension;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C9E5044621137EA1EAA7F13D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.attm1122.StitchTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stitch.app/Stitch";
+			};
+			name = Debug;
+		};
+		E4221BA46CB0EC50EC3C82FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		F30E232A6C05D4A5B4BF0E7F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/Stitch.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "App/Stitch-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.attm1122.Stitch;
+				PRODUCT_NAME = Stitch;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F67544C90902A6E35DE7AEC4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.attm1122.StitchTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stitch.app/Stitch";
+			};
+			name = Release;
+		};
+		FBEF3915A775776A4F93DC73 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/StitchShareExtension.entitlements;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.attm1122.Stitch.ShareExtension;
+				PRODUCT_NAME = StitchShareExtension;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1D3F2EA8C918D78B363CF26A /* Build configuration list for PBXNativeTarget "StitchTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9E5044621137EA1EAA7F13D /* Debug */,
+				F67544C90902A6E35DE7AEC4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		45FA49F1DDF125BC29EB6A3E /* Build configuration list for PBXNativeTarget "Stitch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88C6A46E5E89809FB6269B8D /* Debug */,
+				F30E232A6C05D4A5B4BF0E7F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		55ED6A99E11A4CA75E3094DE /* Build configuration list for PBXNativeTarget "StitchShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B32C07194FAB953337367830 /* Debug */,
+				FBEF3915A775776A4F93DC73 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		93FC6EB1D77239407095787B /* Build configuration list for PBXProject "Stitch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E4221BA46CB0EC50EC3C82FF /* Debug */,
+				92DA8D94A3CC71EA3667E455 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 690B5BDE9B3FCA58A8252D04 /* Project object */;
+}
