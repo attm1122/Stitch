@@ -21,9 +21,12 @@ struct InboxView: View {
     @State private var isShowingFileImporter = false
     @State private var isShowingUploadQueue = false
     @State private var isShowingSettings = false
+    @State private var isShowingOnboarding = false
     @State private var isWorking = false
     @State private var bannerMessage: String?
     @State private var photoSelection: [PhotosPickerItem] = []
+    @State private var importError: String?
+    @State private var showingImportError = false
 
     private var filteredReceipts: [ReceiptRecord] {
         receipts.filter { receipt in
@@ -70,13 +73,24 @@ struct InboxView: View {
                     .listRowBackground(Color.clear)
                 }
 
-                if filteredReceipts.isEmpty {
+                if receipts.isEmpty {
                     Section {
-                        ContentUnavailableView(
-                            "No receipts yet",
-                            systemImage: "tray",
-                            description: Text("Scan, import, or share receipts into Stitch to start building your upload batch.")
-                        )
+                        VStack(spacing: 16) {
+                            ContentUnavailableView(
+                                "No receipts yet",
+                                systemImage: "tray",
+                                description: Text("Scan, import, or share receipts into Stitch to start building your upload batch.")
+                            )
+                            Button("How does Stitch work?") {
+                                isShowingOnboarding = true
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        .padding(.vertical, 8)
+                    }
+                } else if filteredReceipts.isEmpty {
+                    Section {
+                        ContentUnavailableView.search(text: searchText)
                     }
                 } else {
                     Section {
@@ -92,6 +106,7 @@ struct InboxView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                        .onDelete(perform: deleteReceipts)
                     }
                 }
             }
@@ -103,133 +118,105 @@ struct InboxView: View {
                     Button(isSelecting ? "Done" : "Select") {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             isSelecting.toggle()
-                            if !isSelecting {
-                                selectedIDs.removeAll()
-                            }
+                            if !isSelecting { selectedIDs.removeAll() }
                         }
+                    }
+
+                    if isSelecting && !selectedIDs.isEmpty {
+                        Button("Deselect All") {
+                            selectedIDs.removeAll()
+                        }
+                        .foregroundStyle(.secondary)
                     }
                 }
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
-                        isShowingUploadQueue = true
-                    } label: {
-                        Image(systemName: "clock.arrow.circlepath")
-                    }
-
-                    Button {
                         isShowingSettings = true
                     } label: {
                         Image(systemName: "gearshape")
                     }
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                VStack(spacing: 12) {
-                    if let bannerMessage {
-                        Text(bannerMessage)
-                            .font(.footnote)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
-                    }
 
-                    HStack(spacing: 10) {
+                    Menu {
                         Button {
-                            guard VNDocumentCameraViewController.isSupported else {
-                                bannerMessage = "The document scanner is only available on supported devices."
-                                return
-                            }
                             isShowingScanner = true
                         } label: {
-                            CaptureActionLabel(title: "Scan", systemImage: "doc.viewfinder")
+                            Label("Scan Receipt", systemImage: "doc.viewfinder")
                         }
 
-                        PhotosPicker(selection: $photoSelection, maxSelectionCount: 10, matching: .images) {
-                            CaptureActionLabel(title: "Photos", systemImage: "photo.stack")
+                        PhotosPicker(selection: $photoSelection, matching: .images) {
+                            Label("Import from Photos", systemImage: "photo.on.rectangle")
                         }
 
                         Button {
                             isShowingFileImporter = true
                         } label: {
-                            CaptureActionLabel(title: "Files", systemImage: "folder")
+                            Label("Import File", systemImage: "doc.richtext")
                         }
-
-                        Button {
-                            Task {
-                                await uploadReadyReceipts()
-                            }
-                        } label: {
-                            CaptureActionLabel(
-                                title: uploadCandidates.isEmpty ? "Upload" : "Upload \(uploadCandidates.count)",
-                                systemImage: "arrow.up.circle.fill"
-                            )
-                        }
-                        .disabled(uploadCandidates.isEmpty || sessionStore.expensifyEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    } label: {
+                        Image(systemName: "plus")
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
-                .background(.ultraThinMaterial)
-            }
-            .task {
-                await ingestSharedReceipts()
-            }
-            .onChange(of: scenePhase) { _, phase in
-                guard phase == .active else { return }
-                Task {
-                    await ingestSharedReceipts()
-                }
-            }
-            .onChange(of: photoSelection) { _, newItems in
-                guard !newItems.isEmpty else { return }
-                Task {
-                    await importPhotoItems(newItems)
-                    photoSelection = []
+
+                ToolbarItemGroup(placement: .bottomBar) {
+                    if !readyReceipts.isEmpty {
+                        Spacer()
+                        Button {
+                            isShowingUploadQueue = true
+                        } label: {
+                            Label(
+                                "\(uploadCandidates.count) Ready to Upload",
+                                systemImage: "arrow.up.to.line"
+                            )
+                            .fontWeight(.semibold)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
             }
             .sheet(item: $selectedReceipt) { receipt in
                 ReceiptDetailView(receipt: receipt)
             }
-            .sheet(isPresented: $isShowingScanner) {
-                DocumentScannerView(
-                    onComplete: { images in
-                        isShowingScanner = false
-                        Task {
-                            await importScans(images)
-                        }
-                    },
-                    onCancel: {
-                        isShowingScanner = false
-                    }
-                )
-                .ignoresSafeArea()
-            }
-            .sheet(isPresented: $isShowingUploadQueue) {
-                UploadQueueView()
-                    .environmentObject(services)
-                    .environmentObject(sessionStore)
-            }
             .sheet(isPresented: $isShowingSettings) {
                 SettingsView()
-                    .environmentObject(services)
-                    .environmentObject(sessionStore)
+            }
+            .sheet(isPresented: $isShowingOnboarding) {
+                OnboardingView()
+            }
+            .fullScreenCover(isPresented: $isShowingScanner) {
+                DocumentScannerView { images in
+                    isShowingScanner = false
+                    Task { await importScanned(images) }
+                } onCancel: {
+                    isShowingScanner = false
+                }
             }
             .fileImporter(
                 isPresented: $isShowingFileImporter,
-                allowedContentTypes: [.image, .pdf],
+                allowedContentTypes: [.pdf, .image],
                 allowsMultipleSelection: true
             ) { result in
-                switch result {
-                case .success(let urls):
-                    Task {
-                        await importFiles(urls)
-                    }
-                case .failure(let error):
-                    bannerMessage = error.localizedDescription
+                Task { await importFiles(result) }
+            }
+            .onChange(of: photoSelection) { _, newItems in
+                Task { await importPhotos(newItems) }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    Task { await ingestSharedReceipts() }
                 }
+            }
+            .overlay {
+                if isWorking {
+                    ProgressView("Importing...")
+                        .padding()
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
+            .alert("Import Failed", isPresented: $showingImportError, presenting: importError) { _ in
+                Button("OK", role: .cancel) {}
+            } message: { error in
+                Text(error)
             }
         }
     }
@@ -246,108 +233,73 @@ struct InboxView: View {
         }
     }
 
-}
-
-private struct CaptureActionLabel: View {
-    let title: String
-    let systemImage: String
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Image(systemName: systemImage)
-                .font(.headline)
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .lineLimit(1)
+    private func deleteReceipts(at offsets: IndexSet) {
+        for index in offsets {
+            let receipt = filteredReceipts[index]
+            modelContext.delete(receipt)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-    }
-}
-
-private extension InboxView {
-    func importScans(_ images: [UIImage]) async {
-        guard !isWorking else { return }
-        isWorking = true
-        defer { isWorking = false }
-
         do {
-            let imported = try await services.importer.importScannedImages(images, into: modelContext)
-            bannerMessage = "Imported \(imported.count) scanned receipt\(imported.count == 1 ? "" : "s")."
+            try modelContext.save()
         } catch {
-            bannerMessage = error.localizedDescription
+            importError = "Could not delete receipt: \(error.localizedDescription)"
+            showingImportError = true
         }
     }
 
-    func importPhotoItems(_ items: [PhotosPickerItem]) async {
-        guard !isWorking else { return }
+    private func importScanned(_ images: [UIImage]) async {
         isWorking = true
         defer { isWorking = false }
-
         do {
-            var count = 0
-            for item in items {
-                guard let data = try await item.loadTransferable(type: Data.self) else { continue }
-                let fileName = item.itemIdentifier ?? "photo-\(count + 1).jpg"
-                _ = try await services.importer.importPhotoData(data, suggestedName: fileName, into: modelContext)
-                count += 1
+            _ = try await services.importer.importScannedImages(images, into: modelContext)
+        } catch {
+            importError = error.localizedDescription
+            showingImportError = true
+        }
+    }
+
+    private func importPhotos(_ items: [PhotosPickerItem]) async {
+        guard !items.isEmpty else { return }
+        isWorking = true
+        defer {
+            isWorking = false
+            photoSelection.removeAll()
+        }
+        for item in items {
+            guard let data = try? await item.loadTransferable(type: Data.self) else { continue }
+            let name = item.itemIdentifier.map { "\($0).jpg" } ?? "photo.jpg"
+            do {
+                _ = try await services.importer.importPhotoData(data, suggestedName: name, into: modelContext)
+            } catch {
+                importError = error.localizedDescription
+                showingImportError = true
             }
-            bannerMessage = "Imported \(count) photo receipt\(count == 1 ? "" : "s")."
-        } catch {
-            bannerMessage = error.localizedDescription
         }
     }
 
-    func importFiles(_ urls: [URL]) async {
-        guard !isWorking else { return }
+    private func importFiles(_ result: Result<[URL], Error>) async {
         isWorking = true
         defer { isWorking = false }
-
-        do {
-            let imported = try await services.importer.importFiles(at: urls, source: .files, into: modelContext)
-            bannerMessage = "Imported \(imported.count) file receipt\(imported.count == 1 ? "" : "s")."
-        } catch {
-            bannerMessage = error.localizedDescription
+        switch result {
+        case .success(let urls):
+            do {
+                _ = try await services.importer.importFiles(at: urls, source: .files, into: modelContext)
+            } catch {
+                importError = error.localizedDescription
+                showingImportError = true
+            }
+        case .failure(let error):
+            importError = error.localizedDescription
+            showingImportError = true
         }
     }
 
-    func uploadReadyReceipts() async {
-        guard !uploadCandidates.isEmpty else {
-            bannerMessage = "No ready receipts available."
-            return
-        }
-
-        let email = sessionStore.expensifyEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !email.isEmpty else {
-            bannerMessage = "Add an Expensify destination email in Settings first."
-            return
-        }
-
-        isWorking = true
-        defer { isWorking = false }
-
-        let batch = await services.uploadService.upload(
-            receipts: uploadCandidates,
-            expensifyEmail: email,
-            session: sessionStore.session,
-            in: modelContext
-        )
-
-        bannerMessage = batch.message
-        if isSelecting {
-            selectedIDs.removeAll()
-        }
-    }
-
-    func ingestSharedReceipts() async {
+    private func ingestSharedReceipts() async {
         do {
-            let imported = try await services.appGroupInbox.ingestPendingShares(into: modelContext)
-            if imported > 0 {
-                bannerMessage = "Imported \(imported) receipt\(imported == 1 ? "" : "s") from the Share Sheet."
+            let count = try await services.appGroupInbox.ingestPendingShares(into: modelContext)
+            if count > 0 {
+                bannerMessage = "Added \(count) shared receipt\(count == 1 ? "" : "s")."
             }
         } catch {
-            bannerMessage = error.localizedDescription
         }
     }
 }

@@ -18,7 +18,9 @@ final class AppGroupInboxService {
     }
 
     func ingestPendingShares(into context: ModelContext) async throws -> Int {
-        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier) else {
+        guard let containerURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: groupIdentifier
+        ) else {
             return 0
         }
 
@@ -30,18 +32,28 @@ final class AppGroupInboxService {
         let data = try Data(contentsOf: manifestURL)
         let envelopes = try JSONDecoder().decode([PendingSharedReceiptEnvelope].self, from: data)
 
+        guard !envelopes.isEmpty else {
+            try? FileManager.default.removeItem(at: manifestURL)
+            return 0
+        }
+
+        var importedCount = 0
         for envelope in envelopes {
             guard let binaryData = Data(base64Encoded: envelope.dataBase64) else { continue }
-            _ = try await importer.importSharedData(
-                binaryData,
-                fileName: envelope.fileName,
-                contentType: envelope.contentType,
-                into: context
-            )
+            do {
+                _ = try await importer.importSharedData(
+                    binaryData,
+                    fileName: envelope.fileName,
+                    contentType: envelope.contentType,
+                    into: context
+                )
+                importedCount += 1
+            } catch {
+                continue
+            }
         }
 
         try FileManager.default.removeItem(at: manifestURL)
-        return envelopes.count
+        return importedCount
     }
 }
-

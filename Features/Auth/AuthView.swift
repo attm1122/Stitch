@@ -14,6 +14,7 @@ struct AuthView: View {
     @State private var authMode: AuthMode = .magicLink
     @State private var email = ""
     @State private var password = ""
+    @State private var magicLinkSent = false
 
     var body: some View {
         NavigationStack {
@@ -28,44 +29,23 @@ struct AuthView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    VStack(spacing: 16) {
-                        Picker("Auth mode", selection: $authMode) {
-                            ForEach(AuthMode.allCases) { mode in
-                                Text(mode.rawValue).tag(mode)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-
-                        TextField("Work email", text: $email)
-                            .textInputAutocapitalization(.never)
-                            .keyboardType(.emailAddress)
-                            .textFieldStyle(.roundedBorder)
-
-                        if authMode == .password {
-                            SecureField("Password", text: $password)
-                                .textFieldStyle(.roundedBorder)
-                        }
-
-                        Button(action: submit) {
-                            HStack {
-                                if sessionStore.isWorking {
-                                    ProgressView()
-                                        .tint(.white)
-                                }
-                                Text(authMode == .password ? "Sign in" : "Send magic link")
-                                    .fontWeight(.semibold)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || sessionStore.isWorking)
+                    if magicLinkSent {
+                        magicLinkSentView
+                    } else {
+                        signInForm
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Label(services.configuration.hasSupabaseAuth ? "Live Supabase auth configured" : "Demo auth active until BackendConfig is filled in", systemImage: services.configuration.hasSupabaseAuth ? "checkmark.seal.fill" : "hammer.fill")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(services.configuration.hasSupabaseAuth ? .green : .orange)
+                        Label(
+                            services.configuration.hasSupabaseAuth
+                                ? "Live Supabase auth configured"
+                                : "Demo auth active until BackendConfig.plist is filled in",
+                            systemImage: services.configuration.hasSupabaseAuth
+                                ? "checkmark.seal.fill"
+                                : "hammer.fill"
+                        )
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(services.configuration.hasSupabaseAuth ? .green : .orange)
 
                         Text("Core flows still work in demo mode so you can validate the product experience before wiring Supabase and the upload backend.")
                             .font(.footnote)
@@ -74,6 +54,7 @@ struct AuthView: View {
                         if let message = sessionStore.lastMessage {
                             Text(message)
                                 .font(.footnote)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding()
@@ -93,6 +74,73 @@ struct AuthView: View {
         }
     }
 
+    @ViewBuilder
+    private var signInForm: some View {
+        VStack(spacing: 16) {
+            Picker("Auth mode", selection: $authMode) {
+                ForEach(AuthMode.allCases) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: authMode) { _, _ in
+                sessionStore.lastMessage = nil
+            }
+
+            TextField("Work email", text: $email)
+                .textInputAutocapitalization(.never)
+                .keyboardType(.emailAddress)
+                .textContentType(.emailAddress)
+                .textFieldStyle(.roundedBorder)
+
+            if authMode == .password {
+                SecureField("Password", text: $password)
+                    .textContentType(.password)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            Button(action: submit) {
+                HStack {
+                    if sessionStore.isWorking {
+                        ProgressView()
+                            .tint(.white)
+                    }
+                    Text(authMode == .password ? "Sign in" : "Send magic link")
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || sessionStore.isWorking)
+        }
+    }
+
+    @ViewBuilder
+    private var magicLinkSentView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "envelope.badge.fill")
+                .font(.system(size: 48))
+                .foregroundStyle(.blue)
+
+            Text("Check your email")
+                .font(.title2.weight(.semibold))
+
+            Text("We sent a link to **\(email)**. Tap the link to sign in — it will open Stitch automatically.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button("Use a different email") {
+                magicLinkSent = false
+                email = ""
+            }
+            .buttonStyle(.bordered)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+    }
+
     private func submit() {
         Task {
             switch authMode {
@@ -100,8 +148,10 @@ struct AuthView: View {
                 await sessionStore.signIn(email: email, password: password)
             case .magicLink:
                 await sessionStore.sendMagicLink(email: email)
+                if services.configuration.hasSupabaseAuth {
+                    magicLinkSent = true
+                }
             }
         }
     }
 }
-

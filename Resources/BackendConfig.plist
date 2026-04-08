@@ -1,17 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>SupabaseURL</key>
-  <string></string>
-  <key>SupabaseAnonKey</key>
-  <string></string>
-  <key>SupabaseRedirectURL</key>
-  <string>stitch://auth/callback</string>
-  <key>BatchUploadEndpoint</key>
-  <string></string>
-  <key>ExpensifyDestinationEmail</key>
-  <string></string>
+    <!--
+        STITCH BACKEND CONFIGURATION
+        ============================
+        Fill in each key before building for production.
+        Leave keys empty to run in demo mode (no live auth, no live upload).
+
+        Steps:
+        1. Create a project at https://supabase.com
+        2. Copy the Project URL and anon key from Settings > API
+        3. Deploy the Supabase edge functions (Supabase/functions/)
+        4. Set up Resend (https://resend.com) and configure RESEND_API_KEY
+           and STITCH_FROM_EMAIL as Edge Function secrets in Supabase
+        5. Register a custom URL scheme (e.g. stitch://) in Info.plist
+           and paste it as SupabaseRedirectURL below
+    -->
+
+    <!-- Supabase Project URL (e.g. https://xyzabc.supabase.co) -->
+    <key>SupabaseURL</key>
+    <string></string>
+
+    <!-- Supabase anon/public key (safe to embed in client apps) -->
+    <key>SupabaseAnonKey</key>
+    <string></string>
+
+    <!--
+        Deep link URL for magic link redirect.
+        Must match a URL scheme registered in Info.plist.
+        Example: stitch://auth/callback
+    -->
+    <key>SupabaseRedirectURL</key>
+    <string>stitch://auth/callback</string>
+
+    <!--
+        Full URL of the deployed batch-upload-expensify edge function.
+        Example: https://xyzabc.supabase.co/functions/v1/batch-upload-expensify
+        Leave empty to run in demo upload mode.
+    -->
+    <key>BatchUploadEndpoint</key>
+    <string></string>
+
+    <!--
+        Default Expensify destination email shown on first launch.
+        Users can override this in Settings.
+        Example: receipts+yourname@expensify.com
+    -->
+    <key>ExpensifyDestinationEmail</key>
+    <string></string>
 </dict>
 </plist>
-

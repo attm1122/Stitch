@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type ProcessReceiptRequest = {
   fileName: string;
@@ -6,29 +7,65 @@ type ProcessReceiptRequest = {
   pageCount?: number;
 };
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").filter(Boolean);
+
+function corsHeaders(requestOrigin: string | null): HeadersInit {
+  const origin = ALLOWED_ORIGINS.length === 0 || (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin))
+    ? requestOrigin ?? "*"
+    : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+async function verifyJWT(authHeader: string | null): Promise<boolean> {
+  if (!authHeader?.startsWith("Bearer ")) return false;
+
+  const token = authHeader.slice(7);
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseServiceKey) return false;
+
+  const client = createClient(supabaseUrl, supabaseServiceKey);
+  const { data, error } = await client.auth.getUser(token);
+
+  return !error && !!data.user;
+}
 
 serve(async (request) => {
+  const origin = request.headers.get("origin");
+  const headers = corsHeaders(origin);
+
   if (request.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers });
+  }
+
+  if (request.method !== "POST") {
+    return Response.json({ error: "Method not allowed" }, { headers, status: 405 });
+  }
+
+  const isAuthorized = await verifyJWT(request.headers.get("Authorization"));
+  if (!isAuthorized) {
+    return Response.json({ error: "Unauthorized" }, { headers, status: 401 });
+  }
+
+  let body: ProcessReceiptRequest;
+  try {
+    body = (await request.json()) as ProcessReceiptRequest;
+  } catch {
+    return Response.json({ error: "Invalid JSON body" }, { headers, status: 400 });
   }
 
   try {
-    const body = (await request.json()) as ProcessReceiptRequest;
     const result = parseReceipt(body.ocrText ?? "", body.fileName ?? "receipt", body.pageCount ?? 1);
-
-    return Response.json(result, {
-      headers: corsHeaders,
-      status: 200,
-    });
+    return Response.json(result, { headers, status: 200 });
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
-      { headers: corsHeaders, status: 500 },
+      { headers, status: 500 }
     );
   }
 });
@@ -55,7 +92,7 @@ function parseReceipt(text: string, fallbackFileName: string, pageCount: number)
   };
 }
 
-function parseMerchant(text: string, fallbackFileName: string) {
+function parseMerchant(text: string, fallbackFileName: string): string {
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -72,16 +109,16 @@ function parseMerchant(text: string, fallbackFileName: string) {
   return fallbackFileName.replace(/\.[^.]+$/, "").replace(/[_-]/g, " ");
 }
 
-function parseAmount(text: string) {
+function parseAmount(text: string): number | null {
   const matches = [...text.matchAll(/(?:USD|EUR|GBP|AUD|CAD|\$|€|£)\s?(\d{1,4}(?:[.,]\d{3})*(?:[.,]\d{2}))/gi)];
   const values = matches
     .map((match) => Number(match[1].replaceAll(",", "")))
-    .filter((value) => Number.isFinite(value));
+    .filter((value) => Number.isFinite(value) && value > 0);
 
   return values.length ? Math.max(...values) : null;
 }
 
-function parseDate(text: string) {
+function parseDate(text: string): string | null {
   const patterns = [
     /\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b/g,
     /\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b/g,
@@ -92,7 +129,7 @@ function parseDate(text: string) {
     if (!match) continue;
 
     const parsed = new Date(match);
-    if (!Number.isNaN(parsed.getTime())) {
+    if (!Number.isNaN(parsed.getTime()) && parsed.getFullYear() >= 2000) {
       return parsed.toISOString().slice(0, 10);
     }
   }
@@ -100,7 +137,7 @@ function parseDate(text: string) {
   return null;
 }
 
-function parseCurrency(text: string) {
+function parseCurrency(text: string): string {
   const upper = text.toUpperCase();
   if (upper.includes("AUD")) return "AUD";
   if (upper.includes("EUR") || upper.includes("€")) return "EUR";
@@ -108,4 +145,3 @@ function parseCurrency(text: string) {
   if (upper.includes("CAD")) return "CAD";
   return "USD";
 }
-

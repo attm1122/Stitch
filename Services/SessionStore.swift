@@ -10,6 +10,7 @@ final class SessionStore: ObservableObject {
 
     private let authService: AuthServiceProtocol
     private let configuration: BackendConfiguration
+    private let keychain: KeychainStore
     private let defaults: UserDefaults
 
     private enum Keys {
@@ -17,20 +18,28 @@ final class SessionStore: ObservableObject {
         static let expensifyEmail = "stitch.expensify.email"
     }
 
-    init(authService: AuthServiceProtocol, configuration: BackendConfiguration, defaults: UserDefaults = .standard) {
+    init(
+        authService: AuthServiceProtocol,
+        configuration: BackendConfiguration,
+        keychain: KeychainStore = KeychainStore(),
+        defaults: UserDefaults = .standard
+    ) {
         self.authService = authService
         self.configuration = configuration
+        self.keychain = keychain
         self.defaults = defaults
-        self.expensifyEmail = defaults.string(forKey: Keys.expensifyEmail) ?? configuration.defaultExpensifyDestinationEmail
+        self.expensifyEmail = defaults.string(forKey: Keys.expensifyEmail)
+            ?? configuration.defaultExpensifyDestinationEmail
 
-        if let data = defaults.data(forKey: Keys.session),
-           let session = try? JSONDecoder().decode(AuthSession.self, from: data) {
-            self.session = session
-        }
+        self.session = keychain.load(AuthSession.self, forKey: Keys.session)
     }
 
     var isAuthenticated: Bool {
-        session != nil
+        guard let session else { return false }
+        if let expiresAt = session.expiresAt {
+            return expiresAt > Date()
+        }
+        return true
     }
 
     var signedInEmail: String {
@@ -46,6 +55,23 @@ final class SessionStore: ObservableObject {
         defaults.set(email, forKey: Keys.expensifyEmail)
     }
 
+    func validSession() async -> AuthSession? {
+        guard var current = session else { return nil }
+
+        if let expiresAt = current.expiresAt, expiresAt <= Date().addingTimeInterval(60) {
+            if let refreshToken = current.refreshToken,
+               let refreshed = try? await authService.refreshSession(refreshToken: refreshToken) {
+                persist(refreshed)
+                current = refreshed
+            } else {
+                signOut()
+                return nil
+            }
+        }
+
+        return current
+    }
+
     func signIn(email: String, password: String) async {
         isWorking = true
         defer { isWorking = false }
@@ -53,7 +79,9 @@ final class SessionStore: ObservableObject {
         do {
             let session = try await authService.signInWithPassword(email: email, password: password)
             persist(session)
-            lastMessage = authService.isConfigured ? "Signed in." : "Signed into demo mode. Add Supabase keys to enable live auth."
+            lastMessage = authService.isConfigured
+                ? "Signed in."
+                : "Signed into demo mode. Add Supabase keys to enable live auth."
         } catch {
             lastMessage = error.localizedDescription
         }
@@ -66,11 +94,16 @@ final class SessionStore: ObservableObject {
         do {
             try await authService.sendMagicLink(email: email)
             if authService.isConfigured {
-                lastMessage = "Magic link sent to \(email)."
+                lastMessage = "Magic link sent to \(email). Check your email and tap the link to sign in."
             } else {
-                let demo = AuthSession(accessToken: UUID().uuidString, refreshToken: nil, email: email, expiresAt: nil)
+                let demo = AuthSession(
+                    accessToken: UUID().uuidString,
+                    refreshToken: nil,
+                    email: email,
+                    expiresAt: Date().addingTimeInterval(3600)
+                )
                 persist(demo)
-                lastMessage = "Supabase isn’t configured yet, so Stitch opened a local demo session."
+                lastMessage = "Supabase isn't configured yet, so Stitch opened a local demo session."
             }
         } catch {
             lastMessage = error.localizedDescription
@@ -81,7 +114,7 @@ final class SessionStore: ObservableObject {
         do {
             let session = try await authService.session(from: url)
             persist(session)
-            lastMessage = "Magic link verified."
+            lastMessage = "Magic link verified. You're signed in."
         } catch {
             lastMessage = error.localizedDescription
         }
@@ -89,12 +122,16 @@ final class SessionStore: ObservableObject {
 
     func signOut() {
         session = nil
-        defaults.removeObject(forKey: Keys.session)
+        keychain.delete(forKey: Keys.session)
         lastMessage = "Signed out."
     }
 
     private func persist(_ session: AuthSession) {
         self.session = session
-        defaults.set(try? JSONEncoder().encode(session), forKey: Keys.session)
+        do {
+            try keychain.save(session, forKey: Keys.session)
+        } catch {
+            lastMessage = "Warning: Could not securely save your session. You may need to sign in again after restarting the app."
+        }
     }
 }

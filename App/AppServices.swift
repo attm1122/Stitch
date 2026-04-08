@@ -11,7 +11,8 @@ final class AppServices: ObservableObject {
     init(configuration: BackendConfiguration = .current) {
         self.configuration = configuration
         let authService = SupabaseAuthService(configuration: configuration)
-        let sessionStore = SessionStore(authService: authService, configuration: configuration)
+        let keychain = KeychainStore()
+        let sessionStore = SessionStore(authService: authService, configuration: configuration, keychain: keychain)
         let fileStore = ReceiptFileStore()
         let extractionService = ReceiptExtractionService()
         let importer = ReceiptImportCoordinator(fileStore: fileStore, extractionService: extractionService)

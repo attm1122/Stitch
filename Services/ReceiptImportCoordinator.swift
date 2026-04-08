@@ -2,6 +2,23 @@ import Foundation
 import SwiftData
 import UIKit
 
+enum ImportError: LocalizedError {
+    case saveFailed(Error)
+    case extractionFailed(Error)
+    case fileStoreFailed(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .saveFailed(let underlying):
+            "Could not save the receipt: \(underlying.localizedDescription)"
+        case .extractionFailed(let underlying):
+            "Text recognition failed for this receipt: \(underlying.localizedDescription)"
+        case .fileStoreFailed(let underlying):
+            "Could not store the receipt file: \(underlying.localizedDescription)"
+        }
+    }
+}
+
 @MainActor
 final class ReceiptImportCoordinator {
     private let fileStore: ReceiptFileStore
@@ -21,14 +38,25 @@ final class ReceiptImportCoordinator {
             imported.append(receipt)
         }
 
-        try context.save()
+        do {
+            try context.save()
+        } catch {
+            throw ImportError.saveFailed(error)
+        }
+
         return imported
     }
 
     func importPhotoData(_ data: Data, suggestedName: String, into context: ModelContext) async throws -> ReceiptRecord {
         let stored = try await fileStore.persistPhotoData(data, suggestedName: suggestedName)
         let receipt = try await createReceipt(from: stored, source: .photoLibrary, into: context)
-        try context.save()
+
+        do {
+            try context.save()
+        } catch {
+            throw ImportError.saveFailed(error)
+        }
+
         return receipt
     }
 
@@ -41,22 +69,56 @@ final class ReceiptImportCoordinator {
             imported.append(receipt)
         }
 
-        try context.save()
+        do {
+            try context.save()
+        } catch {
+            throw ImportError.saveFailed(error)
+        }
+
         return imported
     }
 
     func importSharedData(_ data: Data, fileName: String, contentType: String, into context: ModelContext) async throws -> ReceiptRecord {
         let stored = try await fileStore.persistSharedData(data, fileName: fileName, contentType: contentType)
         let receipt = try await createReceipt(from: stored, source: .shareSheet, into: context)
-        try context.save()
+
+        do {
+            try context.save()
+        } catch {
+            throw ImportError.saveFailed(error)
+        }
+
         return receipt
     }
 
     private func createReceipt(from stored: StoredReceiptFile, source: ReceiptSource, into context: ModelContext) async throws -> ReceiptRecord {
         let fileURL = await fileStore.fileURL(for: stored.relativePath)
-        let extraction = await extractionService.extract(from: fileURL, fallbackName: stored.fileName)
+
+        let extraction: ExtractedReceiptData
+        do {
+            extraction = try await extractionService.extract(from: fileURL, fallbackName: stored.fileName)
+        } catch {
+            extraction = ExtractedReceiptData(
+                merchant: URL(fileURLWithPath: stored.fileName).deletingPathExtension().lastPathComponent,
+                amount: nil,
+                currencyCode: "USD",
+                purchaseDate: nil,
+                rawText: "",
+                confidence: 0,
+                pageCount: 1,
+                extractionError: error.localizedDescription
+            )
+        }
+
         let fingerprint = await extractionService.duplicateFingerprint(for: extraction)
         let duplicateFlag = hasDuplicate(fingerprint: fingerprint, in: context)
+
+        var notes = ""
+        if duplicateFlag {
+            notes = "Possible duplicate detected."
+        } else if let extractionError = extraction.extractionError {
+            notes = "OCR failed: \(extractionError)"
+        }
 
         let receipt = ReceiptRecord(
             merchant: extraction.merchant,
@@ -69,7 +131,7 @@ final class ReceiptImportCoordinator {
             fileName: stored.fileName,
             contentType: stored.contentType,
             localRelativePath: stored.relativePath,
-            notes: duplicateFlag ? "Possible duplicate detected." : "",
+            notes: notes,
             ocrText: extraction.rawText,
             duplicateFingerprint: fingerprint,
             duplicateFlag: duplicateFlag,
@@ -82,17 +144,20 @@ final class ReceiptImportCoordinator {
     }
 
     private func hasDuplicate(fingerprint: String, in context: ModelContext) -> Bool {
-        guard let receipts = try? context.fetch(FetchDescriptor<ReceiptRecord>()) else {
+        guard !fingerprint.isEmpty,
+              let receipts = try? context.fetch(FetchDescriptor<ReceiptRecord>()) else {
             return false
         }
-        return receipts.contains(where: { $0.duplicateFingerprint == fingerprint && !$0.duplicateFingerprint.isEmpty })
+        return receipts.contains { $0.duplicateFingerprint == fingerprint && !$0.duplicateFingerprint.isEmpty }
     }
 
     private func status(for extraction: ExtractedReceiptData) -> ReceiptStatus {
-        guard extraction.amount != nil, extraction.purchaseDate != nil, !extraction.merchant.isEmpty else {
+        guard extraction.amount != nil,
+              extraction.purchaseDate != nil,
+              !extraction.merchant.isEmpty,
+              extraction.extractionError == nil else {
             return .needsReview
         }
         return .ready
     }
 }
-

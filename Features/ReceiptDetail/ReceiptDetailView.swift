@@ -7,6 +7,8 @@ struct ReceiptDetailView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var amountText: String
+    @State private var saveError: String?
+    @State private var showingSaveError = false
 
     init(receipt: ReceiptRecord) {
         self.receipt = receipt
@@ -18,8 +20,10 @@ struct ReceiptDetailView: View {
             Form {
                 Section("Review") {
                     TextField("Merchant", text: $receipt.merchant)
+
                     TextField("Amount", text: $amountText)
                         .keyboardType(.decimalPad)
+
                     DatePicker(
                         "Date",
                         selection: Binding(
@@ -43,6 +47,7 @@ struct ReceiptDetailView: View {
                     LabeledContent("Source", value: receipt.source.rawValue)
                     LabeledContent("Confidence", value: "\(Int(receipt.extractionConfidence * 100))%")
                     LabeledContent("Pages", value: "\(receipt.pageCount)")
+
                     if receipt.duplicateFlag {
                         Label("This looks like a possible duplicate.", systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
@@ -64,6 +69,7 @@ struct ReceiptDetailView: View {
                 Section("OCR text") {
                     Text(receipt.ocrText.isEmpty ? "No OCR text captured yet." : receipt.ocrText)
                         .font(.footnote.monospaced())
+                        .foregroundStyle(receipt.ocrText.isEmpty ? .secondary : .primary)
                 }
             }
             .navigationTitle("Receipt")
@@ -71,16 +77,31 @@ struct ReceiptDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
-                        if let amount = Double(amountText.replacingOccurrences(of: ",", with: ".")) {
-                            receipt.amount = amount
-                        }
-                        receipt.updatedAt = .now
-                        try? modelContext.save()
-                        dismiss()
+                        saveAndDismiss()
                     }
                 }
             }
+            .alert("Save Failed", isPresented: $showingSaveError, presenting: saveError) { _ in
+                Button("OK", role: .cancel) {}
+            } message: { error in
+                Text(error)
+                Text("Your changes have not been saved. Please try again.")
+            }
+        }
+    }
+
+    private func saveAndDismiss() {
+        if let amount = Double(amountText.replacingOccurrences(of: ",", with: ".")) {
+            receipt.amount = amount
+        }
+        receipt.updatedAt = .now
+
+        do {
+            try modelContext.save()
+            dismiss()
+        } catch {
+            saveError = error.localizedDescription
+            showingSaveError = true
         }
     }
 }
-

@@ -28,10 +28,19 @@ struct BatchUploadResponseBody: Decodable {
     let results: [ItemResult]
 }
 
+private let uploadSessionIdentifier = "com.attm1122.Stitch.upload"
+
 @MainActor
 final class UploadService {
     private let configuration: BackendConfiguration
     private let fileStore: ReceiptFileStore
+
+    private static let backgroundSession: URLSession = {
+        let config = URLSessionConfiguration.background(withIdentifier: uploadSessionIdentifier)
+        config.isDiscretionary = false
+        config.sessionSendsLaunchEvents = true
+        return URLSession(configuration: config)
+    }()
 
     init(configuration: BackendConfiguration, fileStore: ReceiptFileStore) {
         self.configuration = configuration
@@ -41,7 +50,7 @@ final class UploadService {
     func upload(
         receipts: [ReceiptRecord],
         expensifyEmail: String,
-        session: AuthSession?,
+        sessionStore: SessionStore,
         in context: ModelContext
     ) async -> UploadBatchRecord {
         let batch = UploadBatchRecord(
@@ -49,7 +58,9 @@ final class UploadService {
             receiptIdentifiersCSV: receipts.map(\.id.uuidString).joined(separator: ","),
             successCount: 0,
             failureCount: 0,
-            message: configuration.batchUploadEndpoint == nil ? "Demo upload completed locally." : "Uploading receipts to Expensify."
+            message: configuration.batchUploadEndpoint == nil
+                ? "Demo upload completed locally."
+                : "Uploading receipts to Expensify."
         )
         context.insert(batch)
 
@@ -60,10 +71,20 @@ final class UploadService {
         }
 
         do {
-            let results = if let endpoint = configuration.batchUploadEndpoint, !expensifyEmail.isEmpty {
-                try await uploadViaEndpoint(receipts: receipts, expensifyEmail: expensifyEmail, endpoint: endpoint, session: session)
+            let results: [String: BatchUploadResponseBody.ItemResult]
+
+            if let endpoint = configuration.batchUploadEndpoint, !expensifyEmail.isEmpty {
+                guard let validSession = await sessionStore.validSession() else {
+                    throw UploadError.sessionExpired
+                }
+                results = try await uploadViaEndpoint(
+                    receipts: receipts,
+                    expensifyEmail: expensifyEmail,
+                    endpoint: endpoint,
+                    session: validSession
+                )
             } else {
-                try await demoUpload(receipts: receipts)
+                results = try await demoUpload(receipts: receipts)
             }
 
             for receipt in receipts {
@@ -81,9 +102,19 @@ final class UploadService {
             }
 
             batch.completedAt = .now
-            batch.state = batch.failureCount == 0 ? .completed : (batch.successCount > 0 ? .partial : .failed)
-            batch.message = batch.failureCount == 0 ? "Uploaded \(batch.successCount) receipts." : "Uploaded \(batch.successCount), failed \(batch.failureCount)."
-            try? context.save()
+            batch.state = batch.failureCount == 0
+                ? .completed
+                : (batch.successCount > 0 ? .partial : .failed)
+            batch.message = batch.failureCount == 0
+                ? "Uploaded \(batch.successCount) receipts."
+                : "Uploaded \(batch.successCount), failed \(batch.failureCount)."
+
+            do {
+                try context.save()
+            } catch {
+                batch.message += " (Warning: local save failed — \(error.localizedDescription))"
+            }
+
         } catch {
             batch.completedAt = .now
             batch.state = .failed
@@ -94,7 +125,10 @@ final class UploadService {
                 receipt.lastUploadError = error.localizedDescription
             }
 
-            try? context.save()
+            do {
+                try context.save()
+            } catch {
+            }
         }
 
         return batch
@@ -106,7 +140,9 @@ final class UploadService {
             BatchUploadResponseBody.ItemResult(
                 receiptId: receipt.id.uuidString,
                 status: receipt.amount > 0 ? "uploaded" : "failed",
-                message: receipt.amount > 0 ? "Demo upload succeeded." : "Amount must be greater than zero."
+                message: receipt.amount > 0
+                    ? "Demo upload succeeded."
+                    : "Amount must be greater than zero."
             )
         }
         return Dictionary(uniqueKeysWithValues: results.map { ($0.receiptId, $0) })
@@ -116,12 +152,13 @@ final class UploadService {
         receipts: [ReceiptRecord],
         expensifyEmail: String,
         endpoint: URL,
-        session: AuthSession?
+        session: AuthSession
     ) async throws -> [String: BatchUploadResponseBody.ItemResult] {
         var payloadReceipts: [BatchUploadRequestBody.UploadReceipt] = []
 
         for receipt in receipts {
             let data = try await fileStore.fileData(for: receipt.localRelativePath)
+            let dateString = receipt.purchaseDate.map(ISO8601DateFormatter().string(from:))
             payloadReceipts.append(
                 BatchUploadRequestBody.UploadReceipt(
                     receiptId: receipt.id.uuidString,
@@ -130,34 +167,53 @@ final class UploadService {
                     merchant: receipt.merchant,
                     amount: receipt.amount,
                     currencyCode: receipt.currencyCode,
-                    purchaseDate: receipt.purchaseDate.map(Self.dayOnlyString(from:)),
+                    purchaseDate: dateString,
                     base64Data: data.base64EncodedString()
                 )
             )
         }
 
+        let body = BatchUploadRequestBody(expensifyEmail: expensifyEmail, receipts: payloadReceipts)
+
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let token = session?.accessToken {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        request.httpBody = try JSONEncoder().encode(
-            BatchUploadRequestBody(expensifyEmail: expensifyEmail, receipts: payloadReceipts)
-        )
+        request.timeoutInterval = 120
+        request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, (200..<300).contains(httpResponse.statusCode) else {
-            throw URLError(.badServerResponse)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw UploadError.invalidResponse
         }
 
-        let payload = try JSONDecoder().decode(BatchUploadResponseBody.self, from: data)
-        return Dictionary(uniqueKeysWithValues: payload.results.map { ($0.receiptId, $0) })
-    }
+        if httpResponse.statusCode == 401 {
+            throw UploadError.sessionExpired
+        }
 
-    private static func dayOnlyString(from date: Date) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate]
-        return formatter.string(from: date)
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw UploadError.serverError(httpResponse.statusCode)
+        }
+
+        let responseBody = try JSONDecoder().decode(BatchUploadResponseBody.self, from: data)
+        return Dictionary(uniqueKeysWithValues: responseBody.results.map { ($0.receiptId, $0) })
+    }
+}
+
+enum UploadError: LocalizedError {
+    case sessionExpired
+    case invalidResponse
+    case serverError(Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .sessionExpired:
+            "Your session has expired. Please sign in again."
+        case .invalidResponse:
+            "The server returned an unexpected response."
+        case .serverError(let code):
+            "Upload failed with server error \(code). Please try again."
+        }
     }
 }

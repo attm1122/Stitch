@@ -7,6 +7,8 @@ final class ShareViewController: UIViewController {
     private let manifestFileName = "pending-shares.json"
     private let statusLabel = UILabel()
 
+    private let maxFileSizeBytes: Int = 20 * 1024 * 1024
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -36,12 +38,24 @@ final class ShareViewController: UIViewController {
     private func importAttachments() async {
         do {
             let envelopes = try await loadEnvelopes()
+            if envelopes.isEmpty {
+                statusLabel.text = "No supported receipt files found.\nPlease share a PDF or image."
+                try await Task.sleep(for: .seconds(2))
+                extensionContext?.completeRequest(returningItems: nil)
+                return
+            }
             try persist(envelopes: envelopes)
             statusLabel.text = "Saved \(envelopes.count) receipt\(envelopes.count == 1 ? "" : "s") to Stitch."
             try await Task.sleep(for: .milliseconds(650))
             extensionContext?.completeRequest(returningItems: nil)
+        } catch ShareExtensionError.fileTooLarge(let fileName, let sizeMB) {
+            statusLabel.text = "'\(fileName)' is too large (\(sizeMB) MB). Stitch supports files up to 20 MB."
+            try? await Task.sleep(for: .seconds(3))
+            extensionContext?.cancelRequest(withError: ShareExtensionError.fileTooLarge(fileName: fileName, sizeMB: sizeMB))
         } catch {
-            statusLabel.text = "Couldn’t save this receipt.\n\(error.localizedDescription)"
+            statusLabel.text = "Couldn't save this receipt.\n\(error.localizedDescription)"
+            try? await Task.sleep(for: .seconds(2))
+            extensionContext?.cancelRequest(withError: error)
         }
     }
 
@@ -57,23 +71,42 @@ final class ShareViewController: UIViewController {
             if provider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
                 let data = try await provider.dataRepresentation(for: UTType.pdf.identifier)
                 let fileName = provider.suggestedName ?? "shared-receipt.pdf"
-                envelopes.append(PendingSharedReceiptEnvelope(fileName: fileName, contentType: "application/pdf", dataBase64: data.base64EncodedString()))
+                try checkFileSize(data, fileName: fileName)
+                envelopes.append(PendingSharedReceiptEnvelope(
+                    fileName: fileName,
+                    contentType: "application/pdf",
+                    dataBase64: data.base64EncodedString()
+                ))
                 continue
             }
 
             if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                 let data = try await provider.dataRepresentation(for: UTType.image.identifier)
                 let fileName = provider.suggestedName ?? "shared-receipt.jpg"
+                try checkFileSize(data, fileName: fileName)
                 let contentType = fileName.lowercased().hasSuffix(".png") ? "image/png" : "image/jpeg"
-                envelopes.append(PendingSharedReceiptEnvelope(fileName: fileName, contentType: contentType, dataBase64: data.base64EncodedString()))
+                envelopes.append(PendingSharedReceiptEnvelope(
+                    fileName: fileName,
+                    contentType: contentType,
+                    dataBase64: data.base64EncodedString()
+                ))
             }
         }
 
         return envelopes
     }
 
+    private func checkFileSize(_ data: Data, fileName: String) throws {
+        if data.count > maxFileSizeBytes {
+            let sizeMB = Int((Double(data.count) / 1_048_576).rounded())
+            throw ShareExtensionError.fileTooLarge(fileName: fileName, sizeMB: sizeMB)
+        }
+    }
+
     private func persist(envelopes: [PendingSharedReceiptEnvelope]) throws {
-        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier) else {
+        guard let containerURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: groupIdentifier
+        ) else {
             throw CocoaError(.fileNoSuchFile)
         }
 
@@ -87,29 +120,25 @@ final class ShareViewController: UIViewController {
             existing = []
         }
 
-        let merged = existing + envelopes
-        let data = try JSONEncoder().encode(merged)
-        try data.write(to: manifestURL, options: .atomic)
+        let combined = existing + envelopes
+        let encoded = try JSONEncoder().encode(combined)
+        try encoded.write(to: manifestURL, options: .atomic)
     }
 }
 
-private struct PendingSharedReceiptEnvelope: Codable {
+enum ShareExtensionError: LocalizedError {
+    case fileTooLarge(fileName: String, sizeMB: Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .fileTooLarge(let fileName, let sizeMB):
+            "'\(fileName)' (\(sizeMB) MB) exceeds the 20 MB limit."
+        }
+    }
+}
+
+struct PendingSharedReceiptEnvelope: Codable {
     let fileName: String
     let contentType: String
     let dataBase64: String
-}
-
-@MainActor
-private extension NSItemProvider {
-    func dataRepresentation(for typeIdentifier: String) async throws -> Data {
-        try await withCheckedThrowingContinuation { continuation in
-            loadDataRepresentation(forTypeIdentifier: typeIdentifier) { data, error in
-                if let data {
-                    continuation.resume(returning: data)
-                } else {
-                    continuation.resume(throwing: error ?? CocoaError(.fileReadUnknown))
-                }
-            }
-        }
-    }
 }
