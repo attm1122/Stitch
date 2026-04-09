@@ -70,11 +70,13 @@ final class ShareViewController: UIViewController {
         for provider in itemProviders {
             if provider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
                 let data = try await provider.loadData(for: .pdf)
-                let fileName = provider.suggestedName ?? "shared-receipt.pdf"
+                let detectedType = preferredType(for: provider, matching: .pdf) ?? .pdf
+                let fileExtension = detectedType.preferredFilenameExtension ?? "pdf"
+                let fileName = provider.suggestedName ?? "shared-receipt.\(fileExtension)"
                 try checkFileSize(data, fileName: fileName)
                 envelopes.append(PendingSharedReceiptEnvelope(
                     fileName: fileName,
-                    contentType: "application/pdf",
+                    contentType: detectedType.preferredMIMEType ?? "application/pdf",
                     dataBase64: data.base64EncodedString()
                 ))
                 continue
@@ -82,18 +84,25 @@ final class ShareViewController: UIViewController {
 
             if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                 let data = try await provider.loadData(for: .image)
-                let fileName = provider.suggestedName ?? "shared-receipt.jpg"
+                let detectedType = preferredType(for: provider, matching: .image) ?? .jpeg
+                let fileExtension = detectedType.preferredFilenameExtension ?? "jpg"
+                let fileName = provider.suggestedName ?? "shared-receipt.\(fileExtension)"
                 try checkFileSize(data, fileName: fileName)
-                let contentType = fileName.lowercased().hasSuffix(".png") ? "image/png" : "image/jpeg"
                 envelopes.append(PendingSharedReceiptEnvelope(
                     fileName: fileName,
-                    contentType: contentType,
+                    contentType: detectedType.preferredMIMEType ?? "image/jpeg",
                     dataBase64: data.base64EncodedString()
                 ))
             }
         }
 
         return envelopes
+    }
+
+    private func preferredType(for provider: NSItemProvider, matching parentType: UTType) -> UTType? {
+        provider.registeredTypeIdentifiers
+            .map { UTType(importedAs: $0) }
+            .first { $0.conforms(to: parentType) }
     }
 
     private func checkFileSize(_ data: Data, fileName: String) throws {

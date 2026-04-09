@@ -12,11 +12,15 @@ actor ReceiptFileStore {
     private let fileManager: FileManager
     private let receiptsDirectoryURL: URL
 
-    init(fileManager: FileManager = .default) {
+    init(fileManager: FileManager = .default, receiptsDirectoryURL: URL? = nil) {
         self.fileManager = fileManager
-        let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        self.receiptsDirectoryURL = appSupport.appending(path: "Receipts", directoryHint: .isDirectory)
-        try? fileManager.createDirectory(at: receiptsDirectoryURL, withIntermediateDirectories: true)
+        if let receiptsDirectoryURL {
+            self.receiptsDirectoryURL = receiptsDirectoryURL
+        } else {
+            let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            self.receiptsDirectoryURL = appSupport.appending(path: "Receipts", directoryHint: .isDirectory)
+        }
+        try? fileManager.createDirectory(at: self.receiptsDirectoryURL, withIntermediateDirectories: true)
     }
 
     func persistJPEGImage(_ image: UIImage, suggestedName: String) throws -> StoredReceiptFile {
@@ -27,7 +31,17 @@ actor ReceiptFileStore {
     }
 
     func persistPhotoData(_ data: Data, suggestedName: String, contentType: String = UTType.jpeg.safePreferredMIMEType) throws -> StoredReceiptFile {
-        try persistData(data, suggestedName: suggestedName, fileExtension: "jpg", contentType: contentType)
+        let fileExtension = Self.fileExtension(
+            for: suggestedName,
+            contentType: contentType,
+            fallback: "jpg"
+        )
+        return try persistData(
+            data,
+            suggestedName: suggestedName,
+            fileExtension: fileExtension,
+            contentType: contentType
+        )
     }
 
     func persistImportedFile(from sourceURL: URL, suggestedName: String? = nil) throws -> StoredReceiptFile {
@@ -58,6 +72,17 @@ actor ReceiptFileStore {
         try Data(contentsOf: fileURL(for: relativePath))
     }
 
+    private static func fileExtension(for suggestedName: String, contentType: String, fallback: String) -> String {
+        let suggestedExtension = URL(fileURLWithPath: suggestedName).pathExtension
+        if !suggestedExtension.isEmpty {
+            return suggestedExtension.lowercased()
+        }
+        if let inferredExtension = UTType(mimeType: contentType)?.preferredFilenameExtension {
+            return inferredExtension
+        }
+        return fallback
+    }
+
     private func persistData(_ data: Data, suggestedName: String, fileExtension: String, contentType: String) throws -> StoredReceiptFile {
         let baseName = URL(fileURLWithPath: suggestedName).deletingPathExtension().lastPathComponent
         let sanitized = baseName
@@ -70,4 +95,3 @@ actor ReceiptFileStore {
         return StoredReceiptFile(relativePath: uniqueName, fileName: suggestedName, contentType: contentType)
     }
 }
-

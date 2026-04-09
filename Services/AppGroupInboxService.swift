@@ -9,23 +9,48 @@ struct PendingSharedReceiptEnvelope: Codable {
 
 @MainActor
 final class AppGroupInboxService {
-    private let groupIdentifier = "group.com.attm1122.Stitch"
-    private let manifestFileName = "pending-shares.json"
-    private let importer: ReceiptImportCoordinator
+    typealias SharedReceiptImporter = @MainActor (Data, String, String, ModelContext) async throws -> Void
 
-    init(importer: ReceiptImportCoordinator) {
-        self.importer = importer
+    private let fileManager: FileManager
+    private let manifestURLProvider: () -> URL?
+    private let importSharedReceipt: SharedReceiptImporter
+
+    init(
+        importer: ReceiptImportCoordinator,
+        fileManager: FileManager = .default,
+        groupIdentifier: String = "group.com.attm1122.Stitch",
+        manifestFileName: String = "pending-shares.json"
+    ) {
+        self.fileManager = fileManager
+        self.manifestURLProvider = {
+            fileManager.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)?
+                .appending(path: manifestFileName)
+        }
+        self.importSharedReceipt = { data, fileName, contentType, context in
+            _ = try await importer.importSharedData(
+                data,
+                fileName: fileName,
+                contentType: contentType,
+                into: context
+            )
+        }
+    }
+
+    init(
+        fileManager: FileManager = .default,
+        manifestURL: URL,
+        importSharedReceipt: @escaping SharedReceiptImporter
+    ) {
+        self.fileManager = fileManager
+        self.manifestURLProvider = { manifestURL }
+        self.importSharedReceipt = importSharedReceipt
     }
 
     func ingestPendingShares(into context: ModelContext) async throws -> Int {
-        guard let containerURL = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: groupIdentifier
-        ) else {
+        guard let manifestURL = manifestURLProvider() else {
             return 0
         }
-
-        let manifestURL = containerURL.appending(path: manifestFileName)
-        guard FileManager.default.fileExists(atPath: manifestURL.path) else {
+        guard fileManager.fileExists(atPath: manifestURL.path) else {
             return 0
         }
 
@@ -33,27 +58,32 @@ final class AppGroupInboxService {
         let envelopes = try JSONDecoder().decode([PendingSharedReceiptEnvelope].self, from: data)
 
         guard !envelopes.isEmpty else {
-            try? FileManager.default.removeItem(at: manifestURL)
+            try? fileManager.removeItem(at: manifestURL)
             return 0
         }
 
         var importedCount = 0
+        var remainingEnvelopes: [PendingSharedReceiptEnvelope] = []
         for envelope in envelopes {
-            guard let binaryData = Data(base64Encoded: envelope.dataBase64) else { continue }
+            guard let binaryData = Data(base64Encoded: envelope.dataBase64) else {
+                remainingEnvelopes.append(envelope)
+                continue
+            }
             do {
-                _ = try await importer.importSharedData(
-                    binaryData,
-                    fileName: envelope.fileName,
-                    contentType: envelope.contentType,
-                    into: context
-                )
+                try await importSharedReceipt(binaryData, envelope.fileName, envelope.contentType, context)
                 importedCount += 1
             } catch {
-                continue
+                remainingEnvelopes.append(envelope)
             }
         }
 
-        try FileManager.default.removeItem(at: manifestURL)
+        if remainingEnvelopes.isEmpty {
+            try fileManager.removeItem(at: manifestURL)
+        } else {
+            let remainingData = try JSONEncoder().encode(remainingEnvelopes)
+            try remainingData.write(to: manifestURL, options: .atomic)
+        }
+
         return importedCount
     }
 }

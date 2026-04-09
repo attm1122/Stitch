@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import UIKit
+import UniformTypeIdentifiers
 
 enum ImportError: LocalizedError {
     case saveFailed(Error)
@@ -47,8 +48,17 @@ final class ReceiptImportCoordinator {
         return imported
     }
 
-    func importPhotoData(_ data: Data, suggestedName: String, into context: ModelContext) async throws -> ReceiptRecord {
-        let stored = try await fileStore.persistPhotoData(data, suggestedName: suggestedName)
+    func importPhotoData(
+        _ data: Data,
+        suggestedName: String,
+        contentType: String = UTType.jpeg.safePreferredMIMEType,
+        into context: ModelContext
+    ) async throws -> ReceiptRecord {
+        let stored = try await fileStore.persistPhotoData(
+            data,
+            suggestedName: suggestedName,
+            contentType: contentType
+        )
         let receipt = try await createReceipt(from: stored, source: .photoLibrary, into: context)
 
         do {

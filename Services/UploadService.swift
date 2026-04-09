@@ -30,6 +30,11 @@ struct BatchUploadResponseBody: Decodable {
 
 private let uploadSessionIdentifier = "com.attm1122.Stitch.upload"
 
+enum UploadExecutionMode {
+    case demo
+    case live(endpoint: URL)
+}
+
 @MainActor
 final class UploadService {
     private let configuration: BackendConfiguration
@@ -47,20 +52,72 @@ final class UploadService {
         self.fileStore = fileStore
     }
 
+    static func uploadExecutionMode(
+        configuration: BackendConfiguration,
+        expensifyEmail: String
+    ) throws -> UploadExecutionMode {
+        guard let endpoint = configuration.batchUploadEndpoint else {
+            return .demo
+        }
+
+        let trimmedEmail = expensifyEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty else {
+            throw UploadError.missingDestinationEmail
+        }
+        guard isValidDestinationEmail(trimmedEmail) else {
+            throw UploadError.invalidDestinationEmail
+        }
+
+        return .live(endpoint: endpoint)
+    }
+
+    static func isValidDestinationEmail(_ email: String) -> Bool {
+        let emailRegex = #"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"#
+        return email.range(of: emailRegex, options: .regularExpression) != nil
+    }
+
     func upload(
         receipts: [ReceiptRecord],
         expensifyEmail: String,
         sessionStore: SessionStore,
         in context: ModelContext
     ) async -> UploadBatchRecord {
+        let trimmedEmail = expensifyEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let executionMode: UploadExecutionMode
+
+        do {
+            executionMode = try Self.uploadExecutionMode(
+                configuration: configuration,
+                expensifyEmail: trimmedEmail
+            )
+        } catch {
+            let batch = UploadBatchRecord(
+                state: .failed,
+                receiptIdentifiersCSV: receipts.map(\.id.uuidString).joined(separator: ","),
+                successCount: 0,
+                failureCount: receipts.count,
+                message: error.localizedDescription
+            )
+            context.insert(batch)
+
+            for receipt in receipts {
+                receipt.uploadState = .failed
+                receipt.lastUploadAttemptAt = .now
+                receipt.lastUploadError = error.localizedDescription
+            }
+
+            try? context.save()
+            return batch
+        }
+
         let batch = UploadBatchRecord(
             state: .uploading,
             receiptIdentifiersCSV: receipts.map(\.id.uuidString).joined(separator: ","),
             successCount: 0,
             failureCount: 0,
-            message: configuration.batchUploadEndpoint == nil
-                ? "Demo upload completed locally."
-                : "Uploading receipts to Expensify."
+            message: configuration.hasLiveUpload
+                ? "Uploading receipts to Expensify."
+                : "Demo upload completed locally."
         )
         context.insert(batch)
 
@@ -73,17 +130,18 @@ final class UploadService {
         do {
             let results: [String: BatchUploadResponseBody.ItemResult]
 
-            if let endpoint = configuration.batchUploadEndpoint, !expensifyEmail.isEmpty {
+            switch executionMode {
+            case .live(let endpoint):
                 guard let validSession = await sessionStore.validSession() else {
                     throw UploadError.sessionExpired
                 }
                 results = try await uploadViaEndpoint(
                     receipts: receipts,
-                    expensifyEmail: expensifyEmail,
+                    expensifyEmail: trimmedEmail,
                     endpoint: endpoint,
                     session: validSession
                 )
-            } else {
+            case .demo:
                 results = try await demoUpload(receipts: receipts)
             }
 
@@ -202,12 +260,18 @@ final class UploadService {
 }
 
 enum UploadError: LocalizedError {
+    case missingDestinationEmail
+    case invalidDestinationEmail
     case sessionExpired
     case invalidResponse
     case serverError(Int)
 
     var errorDescription: String? {
         switch self {
+        case .missingDestinationEmail:
+            "Add your Expensify email in Settings before uploading receipts."
+        case .invalidDestinationEmail:
+            "Enter a valid Expensify email address before uploading receipts."
         case .sessionExpired:
             "Your session has expired. Please sign in again."
         case .invalidResponse:

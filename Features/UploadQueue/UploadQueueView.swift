@@ -12,6 +12,14 @@ struct UploadQueueView: View {
     @State private var uploadResult: UploadBatchRecord?
     @State private var uploadError: String?
 
+    private var trimmedDestinationEmail: String {
+        sessionStore.expensifyEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isDestinationEmailValid: Bool {
+        !trimmedDestinationEmail.isEmpty && UploadService.isValidDestinationEmail(trimmedDestinationEmail)
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -42,15 +50,21 @@ struct UploadQueueView: View {
                     Text("\(uploadCandidates.count) receipt\(uploadCandidates.count == 1 ? "" : "s") queued")
                 }
 
-                if sessionStore.expensifyEmail.isEmpty {
+                if trimmedDestinationEmail.isEmpty {
                     Section {
                         Label("No Expensify email set. Add one in Settings before uploading.", systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                             .font(.subheadline)
                     }
+                } else if !isDestinationEmailValid {
+                    Section {
+                        Label("The Expensify destination email is invalid. Update it in Settings before uploading.", systemImage: "exclamationmark.octagon.fill")
+                            .foregroundStyle(.red)
+                            .font(.subheadline)
+                    }
                 } else {
                     Section("Destination") {
-                        LabeledContent("Expensify email", value: sessionStore.expensifyEmail)
+                        LabeledContent("Expensify email", value: trimmedDestinationEmail)
                     }
                 }
 
@@ -110,7 +124,7 @@ struct UploadQueueView: View {
                         .disabled(
                             isUploading ||
                             uploadCandidates.isEmpty ||
-                            sessionStore.expensifyEmail.isEmpty
+                            !isDestinationEmailValid
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
@@ -130,7 +144,7 @@ struct UploadQueueView: View {
 
         let result = await services.uploadService.upload(
             receipts: uploadCandidates,
-            expensifyEmail: sessionStore.expensifyEmail,
+            expensifyEmail: trimmedDestinationEmail,
             sessionStore: sessionStore,
             in: modelContext
         )

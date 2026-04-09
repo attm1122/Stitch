@@ -11,8 +11,12 @@ struct BackendConfiguration {
         supabaseURL != nil && !supabaseAnonKey.isEmpty
     }
 
+    var hasLiveUpload: Bool {
+        batchUploadEndpoint != nil
+    }
+
     var uploadModeDescription: String {
-        batchUploadEndpoint == nil ? "Demo upload mode" : "Supabase batch upload"
+        hasLiveUpload ? "Supabase batch upload" : "Demo upload mode"
     }
 
     static let current = load()
@@ -48,4 +52,3 @@ struct BackendConfiguration {
         )
     }
 }
-

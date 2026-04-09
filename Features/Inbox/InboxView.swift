@@ -180,6 +180,9 @@ struct InboxView: View {
             .sheet(isPresented: $isShowingSettings) {
                 SettingsView()
             }
+            .sheet(isPresented: $isShowingUploadQueue) {
+                UploadQueueView(uploadCandidates: uploadCandidates)
+            }
             .sheet(isPresented: $isShowingOnboarding) {
                 OnboardingView()
             }
@@ -211,6 +214,17 @@ struct InboxView: View {
                     ProgressView("Importing...")
                         .padding()
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
+            .overlay(alignment: .top) {
+                if let bannerMessage {
+                    Text(bannerMessage)
+                        .font(.footnote.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(.thinMaterial, in: Capsule())
+                        .padding(.top, 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             .alert("Import Failed", isPresented: $showingImportError, presenting: importError) { _ in
@@ -266,9 +280,17 @@ struct InboxView: View {
         }
         for item in items {
             guard let data = try? await item.loadTransferable(type: Data.self) else { continue }
-            let name = item.itemIdentifier.map { "\($0).jpg" } ?? "photo.jpg"
+            let contentType = item.supportedContentTypes.first ?? .jpeg
+            let fileExtension = contentType.preferredFilenameExtension ?? "jpg"
+            let baseName = item.itemIdentifier ?? UUID().uuidString
+            let name = "\(baseName).\(fileExtension)"
             do {
-                _ = try await services.importer.importPhotoData(data, suggestedName: name, into: modelContext)
+                _ = try await services.importer.importPhotoData(
+                    data,
+                    suggestedName: name,
+                    contentType: contentType.safePreferredMIMEType,
+                    into: modelContext
+                )
             } catch {
                 importError = error.localizedDescription
                 showingImportError = true
@@ -297,7 +319,20 @@ struct InboxView: View {
         do {
             let count = try await services.appGroupInbox.ingestPendingShares(into: modelContext)
             if count > 0 {
-                bannerMessage = "Added \(count) shared receipt\(count == 1 ? "" : "s")."
+                let message = "Added \(count) shared receipt\(count == 1 ? "" : "s")."
+                withAnimation(.spring(duration: 0.25)) {
+                    bannerMessage = message
+                }
+
+                Task {
+                    try? await Task.sleep(for: .seconds(3))
+                    await MainActor.run {
+                        guard bannerMessage == message else { return }
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            bannerMessage = nil
+                        }
+                    }
+                }
             }
         } catch {
         }
