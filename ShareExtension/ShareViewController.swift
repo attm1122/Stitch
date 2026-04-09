@@ -69,7 +69,7 @@ final class ShareViewController: UIViewController {
 
         for provider in itemProviders {
             if provider.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) {
-                let data = try await provider.dataRepresentation(for: UTType.pdf.identifier)
+                let data = try await provider.loadData(for: .pdf)
                 let fileName = provider.suggestedName ?? "shared-receipt.pdf"
                 try checkFileSize(data, fileName: fileName)
                 envelopes.append(PendingSharedReceiptEnvelope(
@@ -81,7 +81,7 @@ final class ShareViewController: UIViewController {
             }
 
             if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
-                let data = try await provider.dataRepresentation(for: UTType.image.identifier)
+                let data = try await provider.loadData(for: .image)
                 let fileName = provider.suggestedName ?? "shared-receipt.jpg"
                 try checkFileSize(data, fileName: fileName)
                 let contentType = fileName.lowercased().hasSuffix(".png") ? "image/png" : "image/jpeg"
@@ -141,4 +141,25 @@ struct PendingSharedReceiptEnvelope: Codable {
     let fileName: String
     let contentType: String
     let dataBase64: String
+}
+
+private extension NSItemProvider {
+    @MainActor
+    func loadData(for contentType: UTType) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            _ = loadDataRepresentation(for: contentType) { data, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let data else {
+                    continuation.resume(throwing: CocoaError(.coderReadCorrupt))
+                    return
+                }
+
+                continuation.resume(returning: data)
+            }
+        }
+    }
 }

@@ -1,77 +1,72 @@
 import Foundation
 import Security
 
-enum KeychainError: LocalizedError {
-    case encodingFailed
-    case saveFailed(OSStatus)
-    case readFailed(OSStatus)
-    case deleteFailed(OSStatus)
-
-    var errorDescription: String? {
-        switch self {
-        case .encodingFailed: return "Failed to encode data for Keychain."
-        case .saveFailed(let status): return "Keychain save failed with status \(status)."
-        case .readFailed(let status): return "Keychain read failed with status \(status)."
-        case .deleteFailed(let status): return "Keychain delete failed with status \(status)."
-        }
-    }
-}
-
 struct KeychainStore {
-    private let service: String
+    enum Error: Swift.Error {
+        case invalidData
+        case unexpectedStatus(OSStatus)
+    }
 
-    init(service: String = Bundle.main.bundleIdentifier ?? "com.attm1122.Stitch") {
+    private let service: String
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+
+    init(service: String = Bundle.main.bundleIdentifier ?? "Stitch") {
         self.service = service
     }
 
     func save<T: Encodable>(_ value: T, forKey key: String) throws {
-        guard let data = try? JSONEncoder().encode(value) else {
-            throw KeychainError.encodingFailed
-        }
+        let data = try encoder.encode(value)
 
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword,
-            kSecAttrService: service,
-            kSecAttrAccount: key,
-            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
-            kSecValueData: data
+        var query = baseQuery(forKey: key)
+        let attributes: [CFString: Any] = [
+            kSecValueData: data,
+            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
 
-        SecItemDelete(query as CFDictionary)
-
-        let status = SecItemAdd(query as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw KeychainError.saveFailed(status)
+        let status = SecItemCopyMatching(query as CFDictionary, nil)
+        switch status {
+        case errSecSuccess:
+            let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+            guard updateStatus == errSecSuccess else {
+                throw Error.unexpectedStatus(updateStatus)
+            }
+        case errSecItemNotFound:
+            query[kSecValueData as String] = data
+            query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            let addStatus = SecItemAdd(query as CFDictionary, nil)
+            guard addStatus == errSecSuccess else {
+                throw Error.unexpectedStatus(addStatus)
+            }
+        default:
+            throw Error.unexpectedStatus(status)
         }
     }
 
     func load<T: Decodable>(_ type: T.Type, forKey key: String) -> T? {
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword,
-            kSecAttrService: service,
-            kSecAttrAccount: key,
-            kSecReturnData: true,
-            kSecMatchLimit: kSecMatchLimitOne
-        ]
+        var query = baseQuery(forKey: key)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
 
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
 
-        guard status == errSecSuccess,
-              let data = result as? Data,
-              let value = try? JSONDecoder().decode(type, from: data) else {
-            return nil
-        }
+        guard status != errSecItemNotFound else { return nil }
+        guard status == errSecSuccess, let data = item as? Data else { return nil }
 
-        return value
+        return try? decoder.decode(type, from: data)
     }
 
     func delete(forKey key: String) {
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword,
-            kSecAttrService: service,
-            kSecAttrAccount: key
-        ]
+        let query = baseQuery(forKey: key)
         SecItemDelete(query as CFDictionary)
+    }
+
+    private func baseQuery(forKey key: String) -> [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key
+        ]
     }
 }

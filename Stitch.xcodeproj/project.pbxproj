@@ -31,6 +31,8 @@
 		C4ADF9DC14E2264A8DD9D9B9 /* ReceiptImportCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9687CE1A899CDDAB851CB8B /* ReceiptImportCoordinator.swift */; };
 		C69B81653A9AC05E2748C37B /* ReceiptDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A3B0F3D1F4A19F9F555F7D /* ReceiptDetailView.swift */; };
 		CE5B1FB634C2A6E3885CA1E7 /* FileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8D230BAB9E460DFAAE1EE48 /* FileStore.swift */; };
+		DD0AD3BD2F873F1900F1949C /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0AD3BC2F873F1900F1949C /* KeychainStore.swift */; };
+		DD0AD3BF2F873F9000F1949C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0AD3BE2F873F9000F1949C /* OnboardingView.swift */; };
 		E6EDA56799317DECB311AB0D /* DocumentScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9678ECE20B1D576D0A98F633 /* DocumentScannerView.swift */; };
 		F38F309FB5F80918DBE6EE2F /* ReceiptHeuristicParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B6C9E44F7AE7A6355BBD3AA /* ReceiptHeuristicParser.swift */; };
 /* End PBXBuildFile section */
@@ -80,6 +82,8 @@
 		D7A3B0F3D1F4A19F9F555F7D /* ReceiptDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptDetailView.swift; sourceTree = "<group>"; };
 		D81E0CF1A4913316B100C1B7 /* ReceiptHeuristicsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptHeuristicsTests.swift; sourceTree = "<group>"; };
 		D9EB4686E4E942D7C0B3AA3D /* ReceiptExtractionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptExtractionService.swift; sourceTree = "<group>"; };
+		DD0AD3BC2F873F1900F1949C /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		DD0AD3BE2F873F9000F1949C /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		E6657BC59D342444296BE881 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E68D127DD2D62ABAFC1FA2EC /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		E6F63642F08CE1C284E9A0C7 /* StitchShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = StitchShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,6 +106,7 @@
 			children = (
 				5DF829F9EC3DB52C9734FCB4 /* InboxView.swift */,
 				C1A9EBF8ACBFB50366849E16 /* ReceiptRowView.swift */,
+				DD0AD3BE2F873F9000F1949C /* OnboardingView.swift */,
 			);
 			path = Inbox;
 			sourceTree = "<group>";
@@ -145,6 +150,7 @@
 				B9687CE1A899CDDAB851CB8B /* ReceiptImportCoordinator.swift */,
 				E68D127DD2D62ABAFC1FA2EC /* SessionStore.swift */,
 				F046FCEFB47C5A9DD924D2E5 /* UploadService.swift */,
+				DD0AD3BC2F873F1900F1949C /* KeychainStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -349,12 +355,14 @@
 				8AB0A2328E48873A146424E5 /* AppServices.swift in Sources */,
 				14E2A2C937F6C1DA39878784 /* AuthService.swift in Sources */,
 				8741337D67D82AE36233F893 /* AuthSession.swift in Sources */,
+				DD0AD3BD2F873F1900F1949C /* KeychainStore.swift in Sources */,
 				389EF9C99C6A6735E82D2E9D /* AuthView.swift in Sources */,
 				90CF5B8A1FE5CB089424C708 /* BackendConfiguration.swift in Sources */,
 				E6EDA56799317DECB311AB0D /* DocumentScannerView.swift in Sources */,
 				CE5B1FB634C2A6E3885CA1E7 /* FileStore.swift in Sources */,
 				0EFD7FA77F43ED42FBBB3FE9 /* Formatters.swift in Sources */,
 				BC1543AF086774A49372933B /* InboxView.swift in Sources */,
+				DD0AD3BF2F873F9000F1949C /* OnboardingView.swift in Sources */,
 				C69B81653A9AC05E2748C37B /* ReceiptDetailView.swift in Sources */,
 				0ADED3CF536404EDD1071AE6 /* ReceiptExtractionService.swift in Sources */,
 				F38F309FB5F80918DBE6EE2F /* ReceiptHeuristicParser.swift in Sources */,
